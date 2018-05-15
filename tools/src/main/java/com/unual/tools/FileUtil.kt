@@ -9,6 +9,30 @@ import java.io.IOException
  */
 class FileUtil {
     companion object {
+        fun deleteSDCardFolder(dir: File): Boolean {
+            val to = File(dir.absolutePath + System.currentTimeMillis())
+            dir.renameTo(to)
+            if (to.isDirectory) {
+                val children = to.list()
+                for (i in children!!.indices) {
+                    val temp = File(to, children[i])
+                    if (temp.isDirectory) {
+                        deleteSDCardFolder(temp)
+                    } else {
+                        val b = deleteSDCardFolder(temp)
+                        //                    boolean b = temp.delete();
+                        if (b == false) {
+                            //                        Log.d("deleteSDCardFolder", "DELETE FAIL");
+                            return false
+                        }
+                    }
+                }
+                return to.delete()
+            } else {
+                return to.delete()
+            }
+        }
+
         /**
          * 获取指定文件大小
          * @param file File
@@ -29,7 +53,6 @@ class FileUtil {
                     } catch (e: IOException) {
                         e.printStackTrace()
                     }
-
                 }
             }
             return size
@@ -53,5 +76,19 @@ class FileUtil {
             }
             return size
         }
+
+        /**
+         * The number of bytes in a kilobyte.
+         */
+        val ONE_KB: Long = 1024
+        /**
+         * The number of bytes in a megabyte.
+         */
+        val ONE_MB = ONE_KB * ONE_KB
+        /**
+         * The file copy buffer size (10 MB) （原为30MB，为更适合在手机上使用，将其改为10MB，by
+         * Geek_Soledad)
+         */
+        private val FILE_COPY_BUFFER_SIZE = ONE_MB * 10
     }
 }
