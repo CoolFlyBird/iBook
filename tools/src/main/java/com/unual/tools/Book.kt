@@ -12,6 +12,8 @@ class Book {
     var date: String = ""//发布时间
     var publisher: String = ""//出版社
     var cover: String = ""//封面
+    var ncxPath: String = ""//路径
+    var chapterEntities: ArrayList<Catalog>? = null//章节
 }
 
 class Catalog {
@@ -19,6 +21,7 @@ class Catalog {
     var name: String = ""//目录名
     var page: String = ""//对应页码
     var url: String = ""//对应地址
+    var urlShort: String = ""//短地址
 }
 
 class Chapter {
