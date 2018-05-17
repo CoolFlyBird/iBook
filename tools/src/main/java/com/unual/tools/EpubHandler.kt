@@ -1,6 +1,7 @@
 package com.unual.tools
 
 import android.text.TextUtils
+import android.util.Log
 import org.xml.sax.Attributes
 import org.xml.sax.SAXException
 import org.xml.sax.helpers.DefaultHandler
@@ -8,6 +9,7 @@ import org.xml.sax.helpers.DefaultHandler
 /**
  * Created by unual on 2018/5/16.
  */
+//解析opf路径
 class ContainerSAXHandler : DefaultHandler() {
     private var containerFullPath: String? = null
 
@@ -44,12 +46,16 @@ class ContainerSAXHandler : DefaultHandler() {
     }
 }
 
+//解析书本和目录信息
 class ContentOpfSAXHandler : DefaultHandler() {
     private var tagName: String? = null
-    private var book: Book = Book()
+    //    lateinit var map: HashMap<String, String>
+    lateinit var book: Book
 
     @Throws(SAXException::class)
     override fun startDocument() {
+//        map = HashMap()
+        book = Book()
         super.startDocument()
     }
 
@@ -60,17 +66,18 @@ class ContentOpfSAXHandler : DefaultHandler() {
             if ("ncx".equals(attributes.getValue("id"), ignoreCase = true)) {
                 book!!.ncxPath = attributes.getValue("href")
             }
+//            map.put(attributes.getValue("id"), attributes.getValue("href"))
         }
 //        else if ("itemref".equals(tagName!!, ignoreCase = true)) {
 //            var catalog = Catalog()
 //            catalog.name = attributes.getValue("idref") + ".html"
 //        }
-        else if ("reference".equals(tagName!!, ignoreCase = true)) {
+        else if ("reference".equals(tagName!!, ignoreCase = true)) {//目录信息
             var catalog = Catalog()
             catalog.name = attributes.getValue("title")
             catalog.urlShort = attributes.getValue("href")
+            book.chapterEntities.add(catalog)
         }
-
         super.startElement(uri, localName, qName, attributes)
     }
 
@@ -104,15 +111,12 @@ class ContentOpfSAXHandler : DefaultHandler() {
     override fun endDocument() {
         super.endDocument()
     }
-
-//    override fun getOpfContent() {
-//
-//    }
 }
 
-class OpfSAXHandler(chapterEntities: List<Chapter>) : DefaultHandler() {
+//解析章节
+class OpfSAXHandler(chapterEntities: ArrayList<Catalog>) : DefaultHandler() {
 
-    internal var chapterEntities: List<Chapter> = ArrayList()
+    internal var chapterEntities: ArrayList<Catalog> = ArrayList()
     internal var isNavMap = false
     internal var isText = false
     //    boolean isNavPoint = false;
@@ -146,7 +150,7 @@ class OpfSAXHandler(chapterEntities: List<Chapter>) : DefaultHandler() {
         }
         if (isNavMap && qName == "content") {
             curChapterPathName = attributes.getValue("src")
-//            setTocNcxChapterEntityData(curData, curChapterPathName)
+            setTocNcxChapterEntityData(curData, curChapterPathName)
         }
         super.startElement(uri, localName, qName, attributes)
     }
@@ -172,16 +176,12 @@ class OpfSAXHandler(chapterEntities: List<Chapter>) : DefaultHandler() {
         super.characters(ch, start, length)
     }
 
-//    private fun setTocNcxChapterEntityData(data: String, keyString: String) {
-//        for (ce in chapterEntities) {
-//            if (keyString == ce.chapter_shortPath) {
-//                ce.chapter_Title = data
-//                break
-//            }
-//        }
-//    }
-//
-//    fun getTocNcxChapterData(): List<EpubBook.ChapterEntity> {
-//        return chapterEntities
-//    }
+    private fun setTocNcxChapterEntityData(data: String, keyString: String) {
+        for (chapter in chapterEntities) {
+            if (keyString == chapter.urlShort) {
+                chapter.name = data
+                break
+            }
+        }
+    }
 }

@@ -2,16 +2,18 @@ package com.unual.tools
 
 import android.util.Log
 import io.reactivex.Observable
-import io.reactivex.ObservableEmitter
-import io.reactivex.ObservableOnSubscribe
-import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.annotations.NonNull
 import io.reactivex.schedulers.Schedulers
-import org.apache.tools.zip.ZipUtil
 import java.io.File
-import java.util.*
 import javax.xml.parsers.SAXParserFactory
+import android.graphics.BitmapFactory
+import android.graphics.Bitmap
+import java.io.BufferedInputStream
+import java.io.FileInputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipInputStream
+
 
 /**
  * Created by Administrator on 2018/5/15.
@@ -31,53 +33,76 @@ class EpubLoader : LoaderInterface {
 
     fun startUnZip(path: String) {
         Observable.just(path)
-                .subscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread())
-                .filter { a: String ->
-                    val zipFile = File(a)
-                    val savePath = a.substring(0, a.lastIndexOf("."))
+                .observeOn(Schedulers.computation())
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .map { path: String ->
+                    Log.e("TAG", "map1 on -> ${Thread.currentThread().name}")
+                    val zipFile = File(path)
+                    val savePath = path.substring(0, path.lastIndexOf("."))
                     val unZipFile = File(savePath)
                     val unZipFileSize = FileUtil.getFileContentSize(unZipFile)
                     val zipFileSize = FileUtil.getFileContentSize(zipFile)
-                    var a = (!unZipFile.exists() || unZipFileSize < zipFileSize)
-                    Log.e("TAG", "have unzip->" + a)
-                    a
-                }
-                .map { path: String ->
-                    val savePath = path.substring(0, path.lastIndexOf("."))
-                    FileUtil.unZipFiles(path, savePath)
+                    if (!unZipFile.exists() || unZipFileSize < zipFileSize) {
+                        FileUtil.unZipFiles(path, savePath)
+                    }
                     savePath
                 }
                 .map { unZipFilePath: String ->
+                    Log.e("TAG", "map2 on -> ${Thread.currentThread().name}")
                     val factory = SAXParserFactory.newInstance()
                     val parser = factory.newSAXParser()
+                    //解析opf路径
                     val metaInfPathFile = File(unZipFilePath + File.separator + "META-INF" + File.separator + "container.xml")
                     val containerSAXHandler = ContainerSAXHandler()
                     parser.parse(metaInfPathFile, containerSAXHandler)
                     val containerFullPath = containerSAXHandler.getContainerFullPath()
                     val contentOpfPath = unZipFilePath + File.separator + containerFullPath
-                    Log.e("TAG", "contentOpfPath:" + contentOpfPath)
+                    Log.e("TAG", "contentOpfPath:$contentOpfPath \n")
+                    //解析书名，章节名
                     val contentOpfFile = File(contentOpfPath)
                     val contentOpfSAXHandler = ContentOpfSAXHandler()
                     parser.parse(contentOpfFile, contentOpfSAXHandler)
-                    val opfContent = contentOpfSAXHandler.getOpfContent()
+                    val book = contentOpfSAXHandler.book
                     val opsDirPath = File(contentOpfPath).parent + File.separator
-                    Log.e("TAG", "opsDirPath:" + opsDirPath)
-//                    for (i in 0 until opfContent.getChapterEntities().size()) {
-//                        Log.e("TAG", "ncxTocs:" + opfContent.getChapterEntities().get(i).toString())
-//                    }
-//                    opfContent.setNcxPath(opsDirPath + opfContent.getNcxPath())
-//                    Log.e("TAG", "opfContent.getNcxPath():" + opfContent.getNcxPath())
-                    val opfSAXHandler = OpfSAXHandler(opfContent.getChapterEntities())
-                    parser.parse(File(opfContent.getNcxPath()), opfSAXHandler)
-                    opfContent.getChapterEntities().remove(0)
-//                    for (i in 0 until opfContent.getChapterEntities().size()) {
-//                        Log.e("TAG", "ncxTocs:" + opfContent.getChapterEntities().get(i).chapter_Title + "--" + opfContent.getChapterEntities().get(i).chapter_shortPath)
-//                    }
-                    for (entity in opfContent.getChapterEntities()) {
-                        entity.chapter_FullPath = opsDirPath + entity.chapter_shortPath
+                    book.ncxPath = opsDirPath + book.ncxPath
+                    //解析章节
+                    val opfSAXHandler = OpfSAXHandler(book.chapterEntities)
+                    parser.parse(File(book.ncxPath), opfSAXHandler)
+//                    book.getChapterEntities().remove(0)
+                    for (chapter in book.chapterEntities) {
+                        chapter.url = opsDirPath + chapter.urlShort
                     }
-                    Log.e("TAG", "opfContent.toString:" + opfContent.toString())
+                    book
+                }.subscribe { book: Book ->
+            Log.e("TAG", "subscribe on -> ${Thread.currentThread().name}")
+            Log.e("TAG", "book->${book.bookName} chapter ${book.chapterEntities.size}")
+            for (chapter in book.chapterEntities) {
+                Log.e("TAG", "chapter.name->${chapter.name} -- ${chapter.urlShort} -- ${chapter.url}")
+            }
+        }
+    }
+
+    @Throws(Exception::class)
+    fun readGuidePic(file: String): Bitmap? {
+        val fileName = file.substring(0, file.length - 4)
+        val zf = ZipFile(file)
+        val `in` = BufferedInputStream(FileInputStream(file))
+        val zin = ZipInputStream(`in`)
+        var ze: ZipEntry
+        while (true) {
+            ze = zin.nextEntry
+            if (ze == null) break
+            if (ze.isDirectory()) {
+                //Do nothing
+            } else {
+                Log.i("tag", "file - " + ze.getName() + " : " + ze.getSize() + " bytes")
+                if (ze.getName().equals(fileName + "/pic/haha.png")) {
+                    val `is` = zf.getInputStream(ze)
+                    return BitmapFactory.decodeStream(`is`)
                 }
+            }
+        }
+        zin.closeEntry()
+        return null
     }
 }
