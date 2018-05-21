@@ -69,6 +69,7 @@ class EpubLoader : LoaderInterface {
                     parser.parse(File(book.ncxPath), opfSAXHandler)
 //                    book.getCatalogs().remove(0)
                     for (chapter in book.catalogs) {
+                        chapter.path = opsDirPath
                         chapter.url = opsDirPath + chapter.urlShort
                     }
                     book

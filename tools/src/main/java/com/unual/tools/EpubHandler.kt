@@ -181,7 +181,7 @@ class OpfSAXHandler(catalogs: ArrayList<Catalog>) : DefaultHandler() {
 
 class ChapterHandler(catalog: Catalog) : DefaultHandler() {
     private lateinit var chapter: Chapter
-    var tag: TagContent = TagContent()
+    lateinit var tag: TagContent
     var c = catalog
 
     override fun startDocument() {
@@ -190,25 +190,27 @@ class ChapterHandler(catalog: Catalog) : DefaultHandler() {
         c.chapter = chapter
     }
 
-    override fun startElement(uri: String?, localName: String?, qName: String?, attributes: Attributes?) {
-        super.startElement(uri, localName, qName, attributes)
+    override fun startElement(uri: String?, localName: String?, qName: String?, attributes: Attributes) {
         tag = TagContent()
+        chapter.tags.add(tag)
         tag.tagName = localName ?: ""
+        if (tag.tagName == "img") {
+            var value = attributes.getValue("src")
+            tag.content = c.path + value
+        }
     }
 
-    override fun characters(ch: CharArray?, start: Int, length: Int) {
-        super.characters(ch, start, length)
-        if (ch != null) {
+    override fun characters(ch: CharArray, start: Int, length: Int) {
+        if (tag.tagName == "img") {
+        } else {
             var s = String(ch, start, length)
-            tag.content = s
+            tag.content = tag.content + s
+            Log.e("TAG", "tag.content ${tag.content}")
         }
     }
 
     override fun endElement(uri: String?, localName: String?, qName: String?) {
-        super.endElement(uri, localName, qName)
-        if (tag.tagName == localName) {
-            chapter.tags.add(tag)
-        }
-        tag.reset()
+//        Log.e("TAG", "${tag.tagName} - ${localName} ${(tag.tagName == localName)} ${tag.content}")
+//        chapter.tags.add(tag)
     }
 }

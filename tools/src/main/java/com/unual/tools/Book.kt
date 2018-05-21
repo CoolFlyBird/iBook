@@ -20,6 +20,7 @@ class Catalog {
     var index: Int = 0//序号
     var name: String = ""//目录名
     var page: String = ""//对应页码
+    var path: String = ""//地址前缀
     var url: String = ""//对应地址
     var urlShort: String = ""//短地址
     var chapter: Chapter? = null
@@ -38,12 +39,5 @@ class TagContent {
     var tagName: String = ""
     var attName: String = ""
     var attValue: String = ""
-    var content: String = ""
-
-    fun reset(){
-        tagName = ""
-        attName = ""
-        attValue = ""
-        content = ""
-    }
+    var content: String = "    "
 }
