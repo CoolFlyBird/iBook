@@ -25,7 +25,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         swipeRefreshLayout.setOnRefreshListener { getAllBook() }
-        var loader = EpubLoader()
 
         adapter = BookAdapter()
         allbooklist.adapter = adapter

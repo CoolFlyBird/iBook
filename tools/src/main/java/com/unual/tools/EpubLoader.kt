@@ -19,8 +19,8 @@ import java.util.zip.ZipInputStream
  * Created by Administrator on 2018/5/15.
  */
 class EpubLoader : LoaderInterface {
-    override fun loadBook(path: String) {
-        startUnZip(path)
+    override fun loadBook(path: String, callback: (Book) -> Unit) {
+        unZip(path, callback)
     }
 
     override fun loadCatalog(id: String) {
@@ -31,10 +31,9 @@ class EpubLoader : LoaderInterface {
 
     }
 
-    fun startUnZip(path: String) {
+    fun unZip(path: String, callback: (Book) -> Unit?) {
         Observable.just(path)
-                .observeOn(Schedulers.computation())
-                .subscribeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.computation())
                 .map { path: String ->
                     Log.e("TAG", "map1 on -> ${Thread.currentThread().name}")
                     val zipFile = File(path)
@@ -73,14 +72,18 @@ class EpubLoader : LoaderInterface {
                         chapter.url = opsDirPath + chapter.urlShort
                     }
                     book
-                }.subscribe { book: Book ->
-            Log.e("TAG", "subscribe on -> ${Thread.currentThread().name}")
-            Log.e("TAG", "book->${book.bookName} chapter ${book.chapterEntities.size}")
-            for (chapter in book.chapterEntities) {
-                Log.e("TAG", "chapter.name->${chapter.name} -- ${chapter.urlShort} -- ${chapter.url}")
-            }
-        }
+                }
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { book: Book ->
+                    Log.e("TAG", "subscribe on -> ${Thread.currentThread().name}")
+                    Log.e("TAG", "book->${book.bookName} chapter ${book.chapterEntities.size}")
+                    for (chapter in book.chapterEntities) {
+                        Log.e("TAG", "chapter.name->${chapter.name} -- ${chapter.urlShort} -- ${chapter.url}")
+                    }
+                    callback.invoke(book)
+                }
     }
+
 
     @Throws(Exception::class)
     fun readGuidePic(file: String): Bitmap? {
