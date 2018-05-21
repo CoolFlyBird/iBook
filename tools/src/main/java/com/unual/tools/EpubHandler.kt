@@ -115,15 +115,14 @@ class ContentOpfSAXHandler : DefaultHandler() {
 
 //解析章节
 class OpfSAXHandler(chapterEntities: ArrayList<Catalog>) : DefaultHandler() {
-
-    internal var chapterEntities: ArrayList<Catalog> = ArrayList()
-    internal var isNavMap = false
-    internal var isText = false
+    var chapterEntities: ArrayList<Catalog> = ArrayList()
+    var isNavMap = false
+    var isText = false
     //    boolean isNavPoint = false;
     //    boolean isNavLabel = false;
-    internal var tagName = ""
-    internal var curChapterPathName = ""
-    internal var curData = ""
+    var tagName = ""
+    var curChapterPathName = ""
+    var curData = ""
 
     init {
         this.chapterEntities = chapterEntities
@@ -159,7 +158,6 @@ class OpfSAXHandler(chapterEntities: ArrayList<Catalog>) : DefaultHandler() {
     @Throws(SAXException::class)
     override fun endElement(uri: String, localName: String, qName: String) {
         super.endElement(uri, localName, qName)
-
         if (qName == "navMap" && isNavMap) {
             isNavMap = false
         }

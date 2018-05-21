@@ -22,18 +22,18 @@ class Catalog {
     var page: String = ""//对应页码
     var url: String = ""//对应地址
     var urlShort: String = ""//短地址
+    var chapter: Chapter? = null
 }
 
 class Chapter {
     var title: String = ""//标题
-    var pages: ArrayList<Page> = ArrayList()
+    var pages: ArrayList<TagContent> = ArrayList()
     var content: String = ""//内容
     var totalPage: Int = 0//总页数
     var current: Int = 0//当前页数
     var currentContent: String = ""//当前内容
 }
 
-class Page {
-    var index: Int = 0//页码
+class TagContent {
     var content: String = ""
 }

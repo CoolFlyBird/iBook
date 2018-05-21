@@ -84,6 +84,9 @@ class EpubLoader : LoaderInterface {
                 }
     }
 
+    fun parseChapter(book: Book) {
+
+    }
 
     @Throws(Exception::class)
     fun readGuidePic(file: String): Bitmap? {
