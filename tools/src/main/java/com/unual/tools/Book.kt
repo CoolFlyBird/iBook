@@ -13,7 +13,7 @@ class Book {
     var publisher: String = ""//出版社
     var cover: String = ""//封面
     var ncxPath: String = ""//路径
-    var chapterEntities: ArrayList<Catalog> = ArrayList()//章节
+    var catalogs: ArrayList<Catalog> = ArrayList()//章节
 }
 
 class Catalog {
@@ -27,7 +27,7 @@ class Catalog {
 
 class Chapter {
     var title: String = ""//标题
-    var pages: ArrayList<TagContent> = ArrayList()
+    var tags: ArrayList<TagContent> = ArrayList()
     var content: String = ""//内容
     var totalPage: Int = 0//总页数
     var current: Int = 0//当前页数
@@ -35,5 +35,15 @@ class Chapter {
 }
 
 class TagContent {
+    var tagName: String = ""
+    var attName: String = ""
+    var attValue: String = ""
     var content: String = ""
+
+    fun reset(){
+        tagName = ""
+        attName = ""
+        attValue = ""
+        content = ""
+    }
 }

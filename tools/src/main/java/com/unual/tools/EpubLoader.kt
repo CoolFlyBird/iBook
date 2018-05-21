@@ -65,10 +65,10 @@ class EpubLoader : LoaderInterface {
                     val opsDirPath = File(contentOpfPath).parent + File.separator
                     book.ncxPath = opsDirPath + book.ncxPath
                     //解析章节
-                    val opfSAXHandler = OpfSAXHandler(book.chapterEntities)
+                    val opfSAXHandler = OpfSAXHandler(book.catalogs)
                     parser.parse(File(book.ncxPath), opfSAXHandler)
-//                    book.getChapterEntities().remove(0)
-                    for (chapter in book.chapterEntities) {
+//                    book.getCatalogs().remove(0)
+                    for (chapter in book.catalogs) {
                         chapter.url = opsDirPath + chapter.urlShort
                     }
                     book
@@ -76,16 +76,33 @@ class EpubLoader : LoaderInterface {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { book: Book ->
                     Log.e("TAG", "subscribe on -> ${Thread.currentThread().name}")
-                    Log.e("TAG", "book->${book.bookName} chapter ${book.chapterEntities.size}")
-                    for (chapter in book.chapterEntities) {
+                    Log.e("TAG", "book->${book.bookName} chapter ${book.catalogs.size}")
+                    for (chapter in book.catalogs) {
                         Log.e("TAG", "chapter.name->${chapter.name} -- ${chapter.urlShort} -- ${chapter.url}")
                     }
                     callback.invoke(book)
                 }
     }
 
-    fun parseChapter(book: Book) {
-
+    fun parseChapter(book: Book, callback: () -> Unit) {
+        var i = 0
+        Observable.fromIterable(book.catalogs)
+                .map { catalog: Catalog ->
+                    val factory = SAXParserFactory.newInstance()
+                    val parser = factory.newSAXParser()
+                    var handler = ChapterHandler(catalog)
+                    parser.parse(File(catalog.url), handler)
+                    book.catalogs.size
+                }
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { total: Int ->
+                    i++
+                    Log.e("TAG", "${i}/$total")
+                    if (i == total) {
+                        callback.invoke()
+                    }
+                }
     }
 
     @Throws(Exception::class)

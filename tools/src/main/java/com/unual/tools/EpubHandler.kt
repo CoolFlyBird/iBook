@@ -49,12 +49,10 @@ class ContainerSAXHandler : DefaultHandler() {
 //解析书本和目录信息
 class ContentOpfSAXHandler : DefaultHandler() {
     private var tagName: String? = null
-    //    lateinit var map: HashMap<String, String>
     lateinit var book: Book
 
     @Throws(SAXException::class)
     override fun startDocument() {
-//        map = HashMap()
         book = Book()
         super.startDocument()
     }
@@ -66,7 +64,6 @@ class ContentOpfSAXHandler : DefaultHandler() {
             if ("ncx".equals(attributes.getValue("id"), ignoreCase = true)) {
                 book!!.ncxPath = attributes.getValue("href")
             }
-//            map.put(attributes.getValue("id"), attributes.getValue("href"))
         }
 //        else if ("itemref".equals(tagName!!, ignoreCase = true)) {
 //            var catalog = Catalog()
@@ -76,7 +73,7 @@ class ContentOpfSAXHandler : DefaultHandler() {
             var catalog = Catalog()
             catalog.name = attributes.getValue("title")
             catalog.urlShort = attributes.getValue("href")
-            book.chapterEntities.add(catalog)
+            book.catalogs.add(catalog)
         }
         super.startElement(uri, localName, qName, attributes)
     }
@@ -114,18 +111,16 @@ class ContentOpfSAXHandler : DefaultHandler() {
 }
 
 //解析章节
-class OpfSAXHandler(chapterEntities: ArrayList<Catalog>) : DefaultHandler() {
-    var chapterEntities: ArrayList<Catalog> = ArrayList()
+class OpfSAXHandler(catalogs: ArrayList<Catalog>) : DefaultHandler() {
+    var catalogs: ArrayList<Catalog> = ArrayList()
     var isNavMap = false
     var isText = false
-    //    boolean isNavPoint = false;
-    //    boolean isNavLabel = false;
     var tagName = ""
     var curChapterPathName = ""
     var curData = ""
 
     init {
-        this.chapterEntities = chapterEntities
+        this.catalogs = catalogs
     }
 
     @Throws(SAXException::class)
@@ -175,11 +170,45 @@ class OpfSAXHandler(chapterEntities: ArrayList<Catalog>) : DefaultHandler() {
     }
 
     private fun setTocNcxChapterEntityData(data: String, keyString: String) {
-        for (chapter in chapterEntities) {
+        for (chapter in catalogs) {
             if (keyString == chapter.urlShort) {
                 chapter.name = data
                 break
             }
         }
+    }
+}
+
+class ChapterHandler(catalog: Catalog) : DefaultHandler() {
+    private lateinit var chapter: Chapter
+    var tag: TagContent = TagContent()
+    var c = catalog
+
+    override fun startDocument() {
+        super.startDocument()
+        chapter = Chapter()
+        c.chapter = chapter
+    }
+
+    override fun startElement(uri: String?, localName: String?, qName: String?, attributes: Attributes?) {
+        super.startElement(uri, localName, qName, attributes)
+        tag = TagContent()
+        tag.tagName = localName ?: ""
+    }
+
+    override fun characters(ch: CharArray?, start: Int, length: Int) {
+        super.characters(ch, start, length)
+        if (ch != null) {
+            var s = String(ch, start, length)
+            tag.content = s
+        }
+    }
+
+    override fun endElement(uri: String?, localName: String?, qName: String?) {
+        super.endElement(uri, localName, qName)
+        if (tag.tagName == localName) {
+            chapter.tags.add(tag)
+        }
+        tag.reset()
     }
 }
