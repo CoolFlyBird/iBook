@@ -11,7 +11,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import com.bumptech.glide.Glide
 import com.unual.tools.Book
 import com.unual.tools.EpubLoader
 import com.unual.tools.TagContent
@@ -28,8 +27,12 @@ class EpubActivity : AppCompatActivity() {
         var epubLoader = EpubLoader()
         var filePath = intent.getStringExtra("filePath")
         var saveFilePath = intent.getStringExtra("saveFilePath")
-        recycler.adapter = MyAdapter(this, tags)
-        recycler.layoutManager = LinearLayoutManager(this)
+//        recycler.adapter = MyAdapter(this, tags)
+//        recycler.layoutManager = LinearLayoutManager(this)
+        var drawView = EpubDrawView(this)
+        var lp = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        drawView.layoutParams = lp
+        content.addView(drawView)
         epubLoader.loadBook(filePath, { book: Book ->
             Log.e("TAG", "$filePath open ${book.bookName} at ${Thread.currentThread().name}")
             epubLoader.parseChapter(book, {
@@ -37,39 +40,40 @@ class EpubActivity : AppCompatActivity() {
                 book.catalogs.forEach {
                     tags.addAll(it.chapter?.tags ?: ArrayList())
                 }
-                recycler.adapter.notifyDataSetChanged()
+                drawView.setContent(tags)
+//                recycler.adapter.notifyDataSetChanged()
             })
         })
 
     }
 
-    class MyAdapter(context: Context, tags: ArrayList<TagContent>) : RecyclerView.Adapter<MyViewHolder>() {
-        private var ctx = context
-        var data = tags
-        override fun getItemCount(): Int = data.size
-
-        override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-            with(data[position]) {
-                if (tagName == "img") {
-                    holder.textView.visibility = View.GONE
-                    holder.imageView.visibility = View.VISIBLE
-                    GlideApp.with(ctx).load(content).into(holder.imageView)
-                } else {
-                    holder.textView.visibility = View.VISIBLE
-                    holder.imageView.visibility = View.GONE
-                    holder.textView.text = content
-                }
-            }
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
-            var view = LayoutInflater.from(ctx).inflate(R.layout.item_recycler, parent, false)
-            return MyViewHolder(view)
-        }
-    }
-
-    class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var imageView: ImageView = itemView.findViewById(R.id.image)
-        var textView: TextView = itemView.findViewById(R.id.text)
-    }
+//    class MyAdapter(context: Context, tags: ArrayList<TagContent>) : RecyclerView.Adapter<MyViewHolder>() {
+//        private var ctx = context
+//        var data = tags
+//        override fun getItemCount(): Int = data.size
+//
+//        override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
+//            with(data[position]) {
+//                if (tagName.contains("img",true)) {
+//                    holder.textView.visibility = View.GONE
+//                    holder.imageView.visibility = View.VISIBLE
+//                    GlideApp.with(ctx).load(content).into(holder.imageView)
+//                } else {
+//                    holder.textView.visibility = View.VISIBLE
+//                    holder.imageView.visibility = View.GONE
+//                    holder.textView.text = content
+//                }
+//            }
+//        }
+//
+//        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
+//            var view = LayoutInflater.from(ctx).inflate(R.layout.item_recycler, parent, false)
+//            return MyViewHolder(view)
+//        }
+//    }
+//
+//    class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+//        var imageView: ImageView = itemView.findViewById(R.id.image)
+//        var textView: TextView = itemView.findViewById(R.id.text)
+//    }
 }

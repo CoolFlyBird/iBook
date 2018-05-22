@@ -41,3 +41,8 @@ class TagContent {
     var attValue: String = ""
     var content: String = "    "
 }
+
+class Page {
+    var content: ArrayList<String> = ArrayList()
+    var chapterName: String = ""
+}

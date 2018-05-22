@@ -1,5 +1,7 @@
 package com.unual.tools
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.text.TextUtils
 import android.util.Log
 import org.xml.sax.Attributes
@@ -179,6 +181,7 @@ class OpfSAXHandler(catalogs: ArrayList<Catalog>) : DefaultHandler() {
     }
 }
 
+//解析内容
 class ChapterHandler(catalog: Catalog) : DefaultHandler() {
     private lateinit var chapter: Chapter
     lateinit var tag: TagContent
@@ -194,23 +197,37 @@ class ChapterHandler(catalog: Catalog) : DefaultHandler() {
         tag = TagContent()
         chapter.tags.add(tag)
         tag.tagName = localName ?: ""
-        if (tag.tagName == "img") {
+        if (tag.tagName.trim() == "img") {
             var value = attributes.getValue("src")
             tag.content = c.path + value
         }
     }
 
     override fun characters(ch: CharArray, start: Int, length: Int) {
-        if (tag.tagName == "img") {
+        if (tag.tagName.trim() == "img") {
         } else {
             var s = String(ch, start, length)
             tag.content = tag.content + s
-            Log.e("TAG", "tag.content ${tag.content}")
         }
     }
 
     override fun endElement(uri: String?, localName: String?, qName: String?) {
 //        Log.e("TAG", "${tag.tagName} - ${localName} ${(tag.tagName == localName)} ${tag.content}")
 //        chapter.tags.add(tag)
+    }
+}
+
+class ContentParse(tagContents: ArrayList<TagContent>, w: Int, h: Int) {
+    var pages: ArrayList<Page> = ArrayList()
+    var tags = tagContents
+    var width = w
+    var height = h
+
+    fun parse(callback: (Page) -> Unit) {
+        for (tag in tags) {
+            var bitmap = BitmapFactory.decodeFile(tag.content, BitmapFactory.Options())
+            var h = bitmap.height
+            var w = bitmap.width
+        }
     }
 }
